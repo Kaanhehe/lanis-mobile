@@ -68,18 +68,25 @@ void main() async {
   enableTransparentNavigationBar();
 
   authenticationState.login().then((v) {
-    if (sph?.session != null) QuickActionsStartUp();
+    // Ensure QuickActions initialization occurs after first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (sph?.session != null) QuickActionsStartUp();
+    });
   });
-
-  await setupBackgroundService(accountDatabase);
-  await initializeNotifications();
-  await initializeDateFormatting();
 
   runApp(
     Phoenix(
       child: const App(),
     ),
   );
+
+  // Defer non-critical initialization until after the first frame to avoid
+  // blocking the native splash on cold start (particularly on iOS).
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await initializeDateFormatting();
+    await initializeNotifications();
+    await setupBackgroundService(accountDatabase);
+  });
 }
 
 // Or translucent when 3-Way.
@@ -246,11 +253,11 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
                   text: Trace.from(details.stack!).terse.toString()));
               if (context!.mounted) {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => MonoTextViewer(
-                    report: details.stack.toString(),
-                    title: "Stack Trace",
-                    fileNameStart: "stack_trace_default",
-                  )));
+                    builder: (context) => MonoTextViewer(
+                          report: details.stack.toString(),
+                          title: "Stack Trace",
+                          fileNameStart: "stack_trace_default",
+                        )));
               }
             },
             style: ButtonStyle(

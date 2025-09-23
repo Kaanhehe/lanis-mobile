@@ -98,38 +98,35 @@ class _StartupScreenState extends State<StartupScreen>
   }
 
   void requestPermissions() async {
-    var status = await Permission.notification.request();
-    if (status.isGranted) return;
-    status = await Permission.notification.request();
-    if (status.isGranted) return;
-    if (status == PermissionStatus.granted) return;
-    if (status.isDenied && !status.isPermanentlyDenied) {
-      if (mounted) {
-        await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                  icon: Icon(Icons.notifications_off),
-                  title: Text(AppLocalizations.of(context).notifications),
-                  content: Text(AppLocalizations.of(context)
-                      .notificationPermanentlyDenied),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text(AppLocalizations.of(context).close),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        AppSettings.openAppSettings(
-                            asAnotherTask: false,
-                            type: AppSettingsType.notification);
-                      },
-                      child: Text(AppLocalizations.of(context).open),
-                    ),
-                  ],
-                ));
-      }
+    // Request notification permission once; avoid repeated prompts on startup.
+    final status = await Permission.notification.request();
+    if (status.isPermanentlyDenied && mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          icon: const Icon(Icons.notifications_off),
+          title: Text(AppLocalizations.of(context).notifications),
+          content:
+              Text(AppLocalizations.of(context).notificationPermanentlyDenied),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(AppLocalizations.of(context).close),
+            ),
+            TextButton(
+              onPressed: () {
+                AppSettings.openAppSettings(
+                  asAnotherTask: false,
+                  type: AppSettingsType.notification,
+                );
+              },
+              child: Text(AppLocalizations.of(context).open),
+            ),
+          ],
+        ),
+      );
     }
   }
 

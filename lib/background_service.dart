@@ -91,10 +91,13 @@ Future<void> initializeNotifications() async {
     FlutterLocalNotificationsPlugin().initialize(
       const InitializationSettings(
         android: AndroidInitializationSettings('@drawable/ic_launcher'),
+        // On iOS, avoid auto-requesting permissions at startup to prevent
+        // conflicts with system prompts during cold launch.
         iOS: DarwinInitializationSettings(
-            requestAlertPermission: true,
-            requestBadgePermission: true,
-            requestSoundPermission: true),
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
       ),
     );
   } catch (e, s) {
